@@ -584,19 +584,19 @@ export async function runAutomation(id: unknown, slot?: { time: string; date: st
     return listAutomations()
   }
   const hadTikTokApproval = automation.accounts.some((account) => account.platform === 'tiktok') && item.tiktokApproval != null
-  // Waiting for approval is not an attempt. A clip approved during the wake-up
-  // grace period can still use the slot; actual attempts reserve it once.
-  if (slot) { automation.lastSlots[slot.time] = slot.date; save(workspace) }
   if (!automation.profileId || automation.accounts.length === 0) {
     automation.lastError = 'Choose one Zernio profile and at least one of its accounts.'
     save(workspace)
     return listAutomations()
   }
+  // Waiting for approval is not an attempt. A clip approved during the wake-up
+  // grace period can still use the slot; actual attempts reserve it once.
+  if (slot) { automation.lastSlots[slot.time] = slot.date; save(workspace) }
   let submissionStarted = false
   busy.add(automation.id)
   try {
     checkProfileAccounts(await getZernioOverview(), automation.profileId, automation.accounts)
-    if (currentWorkspace() !== workspace || !cached.includes(automation)) return []
+    if (currentWorkspace() !== workspace || !cached.includes(automation)) return listAutomations()
     const path = join(bankPath(workspace, automation.id), item.fileName)
     if (!isAutomationMedia(path)) throw new Error('Clip file is missing from the content bank.')
     const tiktokTargets = automation.accounts.filter((account) => account.platform === 'tiktok')
@@ -606,7 +606,7 @@ export async function runAutomation(id: unknown, slot?: { time: string; date: st
     // A scheduled run must check current creator permissions even if the user
     // approved seconds ago and the publishing service still has cached info.
     await Promise.all(tiktokTargets.map((target) => getTikTokCreatorInfo(target.accountId)))
-    if (currentWorkspace() !== workspace || !cached.includes(automation)) return []
+    if (currentWorkspace() !== workspace || !cached.includes(automation)) return listAutomations()
     if (tiktokTargets.length) assertApprovedFile(item, path)
     const youtube = generated?.find((post) => post.platform === 'youtube')
     const facebook = generated?.find((post) => post.platform === 'facebook')
@@ -639,7 +639,7 @@ export async function runAutomation(id: unknown, slot?: { time: string; date: st
     const result = await publishClip(request, (progress) => {
       if (progress.phase === 'publishing') submissionStarted = true
     })
-    if (currentWorkspace() !== workspace || !cached.includes(automation)) return []
+    if (currentWorkspace() !== workspace || !cached.includes(automation)) return listAutomations()
     item.postId = result.post?.id ?? null
     if (result.post && !['failed', 'duplicate', 'partial'].includes(result.outcome)) {
       item.status = 'posted'

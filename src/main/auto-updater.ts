@@ -44,6 +44,7 @@ function macBundlePath(): string {
 
 /** Official builds carry BridgeMind's Developer ID; a local `npm run dist:mac` build doesn't. */
 function signedByBridgeMind(): Promise<boolean> {
+  if (process.platform !== 'darwin') return Promise.resolve(false)
   return new Promise((done) => {
     execFile('/usr/bin/codesign', ['--display', '--verbose=2', macBundlePath()], { timeout: 10_000 }, (error, _stdout, stderr) => {
       done(!error && new RegExp(`^TeamIdentifier=${MAC_TEAM_ID}$`, 'm').test(stderr) && /^Authority=Developer ID Application: /m.test(stderr))

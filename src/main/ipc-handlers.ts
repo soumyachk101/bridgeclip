@@ -60,7 +60,7 @@ export function registerIpcHandlers(getMainWindow: () => BrowserWindow | null): 
   handle('settings:load', () => {
     return publicSettings(loadSettings())
   })
-  handle('models:list', (_event, refresh: unknown = false) => getModelCatalog(refresh))
+  handle('models:list', (_event, refresh: unknown = false) => getModelCatalog(Boolean(refresh)))
 
   handle('settings:save', (_event, settings: PublicSettings) => {
     const current = loadSettings()
@@ -240,8 +240,9 @@ export function registerIpcHandlers(getMainWindow: () => BrowserWindow | null): 
 
   handle('history:getJob', (_event, outputDir: string) => {
     assertAbsolutePath(outputDir)
-    if (!isWithinDirectory(outputDir, loadSettings().outputDirectory)) throw new Error('Job is outside the library')
-    return getJobOutput(outputDir, loadSettings().outputDirectory)
+    const outputDirectory = loadSettings().outputDirectory
+    if (!isWithinDirectory(outputDir, outputDirectory)) throw new Error('Job is outside the library')
+    return getJobOutput(outputDir, outputDirectory)
   })
 
   handle('thumbnails:generate', async (_event, videoPath: string, seekSeconds?: number) => {

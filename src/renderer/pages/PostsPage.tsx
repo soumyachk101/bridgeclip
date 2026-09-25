@@ -80,7 +80,7 @@ function PostsList({ onNavigate }: { onNavigate: (page: Page) => void }): React.
     const timer = setInterval(() => {
       if (document.visibilityState === 'visible') void usePostsStore.getState().refresh(false)
     }, POLL_MS)
-    const onFocus = (): void => void usePostsStore.getState().refresh(false)
+    const onFocus = (): void => { void usePostsStore.getState().refresh(false) }
     window.addEventListener('focus', onFocus)
     return () => {
       clearInterval(timer)
